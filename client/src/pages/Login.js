@@ -11,7 +11,7 @@ const Login = () => {
   const location = useLocation();
   const { login } = useAuth();
 
-  const from = location.state?.from?.pathname || '/discover';
+  const from = location.state?.from?.pathname || '/posts';
 
   const handleSubmit = async (e) => {
     e.preventDefault();

@@ -29,7 +29,9 @@ const upload = multer({
 
 router.get('/', authenticateToken, async (req: Request, res: Response) => {
   try {
-    const posts = await Post.find()
+    const filter: any = {};
+    if (req.query.user) filter.user = req.query.user;
+    const posts = await Post.find(filter)
       .populate('user', 'name photos')
       .populate('comments.user', 'name photos')
       .sort('-createdAt')

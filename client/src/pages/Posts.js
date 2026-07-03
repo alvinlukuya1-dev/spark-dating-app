@@ -2,14 +2,28 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import NavBar from '../components/NavBar';
 
+const timeAgo = (date) => {
+  const diff = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'Just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(date).toLocaleDateString();
+};
+
 const Posts = () => {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [content, setContent] = useState('');
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState('');
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [commentText, setCommentText] = useState({});
+  const [liking, setLiking] = useState({});
   const fileRef = useRef(null);
 
   const loadPosts = useCallback(async () => {
@@ -55,6 +69,8 @@ const Posts = () => {
   };
 
   const handleLike = async (postId) => {
+    if (liking[postId]) return;
+    setLiking(prev => ({ ...prev, [postId]: true }));
     const res = await fetch(`/api/posts/like/${postId}`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` }
@@ -63,61 +79,105 @@ const Posts = () => {
       const { likes } = await res.json();
       setPosts(prev => prev.map(p => p._id === postId ? { ...p, likes: { length: likes } } : p));
     }
+    setLiking(prev => ({ ...prev, [postId]: false }));
   };
+
+  const handleComment = async (postId) => {
+    const text = commentText[postId];
+    if (!text?.trim()) return;
+    const res = await fetch(`/api/posts/comment/${postId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ text })
+    });
+    if (res.ok) {
+      setPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: [...(p.comments || []), { user: { name: user?.name, photos: user?.photos }, text, createdAt: new Date() }] } : p));
+      setCommentText(prev => ({ ...prev, [postId]: '' }));
+    }
+  };
+
+  const isLiked = (post) => post.likes?.length > 0;
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>;
 
   return (
     <div className="page">
-      <div className="posts-page">
-        <div className="page-header"><h1>Feed</h1></div>
-        <form onSubmit={handleSubmit} className="post-form">
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            placeholder="What's on your mind?"
-            rows={3}
-            maxLength={1000}
-          />
-          <div className="post-image-upload">
-            <button type="button" className="upload-btn" onClick={() => fileRef.current?.click()}>
-              📷 {preview ? 'Change Photo' : 'Add Photo'}
-            </button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              hidden
-            />
-            {preview && <img src={preview} alt="" className="upload-preview" />}
+      <div className="ig-feed">
+        <div className="ig-header"><h1>Feed</h1></div>
+        <form onSubmit={handleSubmit} className="ig-create">
+          <div className="ig-create-top">
+            <img src={user?.photos?.[0] || 'https://via.placeholder.com/32x32?text=U'} alt="" className="ig-create-avatar" />
+            <textarea value={content} onChange={(e) => setContent(e.target.value)} placeholder="What's on your mind?" rows={2} maxLength={1000} />
           </div>
-          <button type="submit" disabled={uploading || (!content.trim() && !imageFile)} className="btn btn-primary">
-            {uploading ? 'Posting...' : 'Post'}
-          </button>
+          {preview && <img src={preview} alt="" className="ig-create-preview" />}
+          <div className="ig-create-bottom">
+            <button type="button" className="ig-photo-btn" onClick={() => fileRef.current?.click()}>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </button>
+            <input ref={fileRef} type="file" accept="image/*" onChange={handleFileSelect} hidden />
+            {imageFile && <span className="ig-file-name">{imageFile.name}</span>}
+            <button type="submit" disabled={uploading || (!content.trim() && !imageFile)} className="ig-post-btn">{uploading ? 'Posting...' : 'Share'}</button>
+          </div>
         </form>
-        <div className="posts-feed">
-          {posts.length === 0 && <div className="empty-state"><span>📝</span><p>No posts yet. Be the first!</p></div>}
-          {posts.map(post => (
-            <div key={post._id} className="post-card">
-              <div className="post-header">
-                <img
-                  src={post.user?.photos?.[0] || 'https://via.placeholder.com/40x40?text=User'}
-                  className="post-avatar"
-                  alt=""
-                />
-                <strong>{post.user?.name || 'Unknown'}</strong>
+        <div className="ig-posts">
+          {posts.length === 0 && <div className="empty-state"><span>📷</span><p>No posts yet</p></div>}
+          {posts.map(post => {
+            const liked = isLiked(post);
+            return (
+              <div key={post._id} className="ig-card">
+                <div className="ig-card-header">
+                  <img src={post.user?.photos?.[0] || 'https://via.placeholder.com/32x32?text=User'} alt="" className="ig-card-avatar" />
+                  <div className="ig-card-user">
+                    <strong>{post.user?.name || 'Unknown'}</strong>
+                    <span className="ig-card-time">{timeAgo(post.createdAt)}</span>
+                  </div>
+                </div>
+                {post.image && (
+                  <div className="ig-card-image" onDoubleClick={() => handleLike(post._id)}>
+                    <img src={post.image} alt="" />
+                    {liked && <div className="ig-heart-anim">❤️</div>}
+                  </div>
+                )}
+                <div className="ig-card-body">
+                  <div className="ig-card-actions">
+                    <button onClick={() => handleLike(post._id)} className={`ig-action-btn ${liked ? 'liked' : ''}`}>
+                      <svg viewBox="0 0 24 24" width="24" height="24" fill={liked ? '#ed4956' : 'none'} stroke={liked ? '#ed4956' : 'currentColor'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </button>
+                    <span className="ig-likes">{post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}</span>
+                  </div>
+                  <div className="ig-card-caption">
+                    <strong>{post.user?.name}</strong> {post.content}
+                  </div>
+                  {post.comments?.length > 0 && (
+                    <div className="ig-comments">
+                      {post.comments.map((c, i) => (
+                        <div key={i} className="ig-comment">
+                          <strong>{c.user?.name || 'User'}</strong> {c.text}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="ig-comment-form">
+                    <input
+                      value={commentText[post._id] || ''}
+                      onChange={(e) => setCommentText(prev => ({ ...prev, [post._id]: e.target.value }))}
+                      placeholder="Add a comment..."
+                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleComment(post._id); } }}
+                    />
+                    <button
+                      onClick={() => handleComment(post._id)}
+                      disabled={!commentText[post._id]?.trim()}
+                      className="ig-comment-btn"
+                    >Post</button>
+                  </div>
+                </div>
               </div>
-              <p className="post-content">{post.content}</p>
-              {post.image && <img src={post.image} alt="" className="post-image" />}
-              <div className="post-actions">
-                <button onClick={() => handleLike(post._id)} className="post-action-btn">
-                  ♥ {post.likes?.length || 0}
-                </button>
-                <span>💬 {post.comments?.length || 0}</span>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       <NavBar />

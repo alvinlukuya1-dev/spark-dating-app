@@ -1,12 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 
 const MatchCard = ({ match, onClick }) => {
   const { user, matchedAt } = match;
   const date = new Date(matchedAt).toLocaleDateString();
 
   return (
-    <div className="match-card" onClick={() => onClick(match.matchId)}>
+    <div className="match-card" onClick={() => onClick(match)}>
       <div className="match-avatar">
         <img src={user.photos?.[0] || 'https://via.placeholder.com/80x80?text=User'} alt={user.name} />
       </div>

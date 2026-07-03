@@ -8,6 +8,8 @@ import Matches from './pages/Matches';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Posts from './pages/Posts';
+import Search from './pages/Search';
+import UserProfile from './pages/UserProfile';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { SocketProvider } from './context/SocketContext';
@@ -25,6 +27,8 @@ function App() {
             <Route path="/matches" element={<Matches />} />
             <Route path="/chat/:matchId" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/profile/:userId" element={<UserProfile />} />
+            <Route path="/search" element={<Search />} />
             <Route path="/posts" element={<Posts />} />
             <Route path="*" element={<h1>404 Not Found</h1>} />
           </Routes>

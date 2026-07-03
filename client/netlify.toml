@@ -9,6 +9,12 @@
   force = true
 
 [[redirects]]
+  from = "/uploads/*"
+  to = "https://pwani-sparks.onrender.com/uploads/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/socket.io/*"
   to = "https://pwani-sparks.onrender.com/socket.io/:splat"
   status = 200

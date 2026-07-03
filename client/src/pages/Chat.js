@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
 import MessageList from '../components/MessageList';
@@ -9,12 +9,12 @@ const Chat = () => {
   const { user } = useAuth();
   const { matchId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { connected, sendMessage: socketSend } = useSocket();
   const [messages, setMessages] = useState([]);
-  const [partner, setPartner] = useState(null);
+  const [partner, setPartner] = useState(location.state?.partner || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [typing, setTyping] = useState(false);
 
   const loadChat = useCallback(async () => {
     try {
@@ -24,23 +24,14 @@ const Chat = () => {
       if (res.ok) {
         const data = await res.json();
         setMessages(data);
-        if (data.length > 0) {
+        if (data.length > 0 && !partner) {
           const other = data[0].sender._id === user?._id ? data[0].receiver : data[0].sender;
           setPartner(other);
-        } else {
-          const matchRes = await fetch('/api/swipe/matches', {
-            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-          });
-          if (matchRes.ok) {
-            const matches = await matchRes.json();
-            const m = matches.find(m => m.matchId === matchId || m.user?.id === matchId);
-            if (m) setPartner(m.user);
-          }
         }
       } else setError('Failed to load messages');
     } catch { setError('Network error');
     } finally { setLoading(false); }
-  }, [matchId, user?._id]);
+  }, [matchId, user?._id, partner]);
 
   useEffect(() => { loadChat(); }, [loadChat]);
 
@@ -66,12 +57,14 @@ const Chat = () => {
     <div className="chat-page">
       <div className="chat-header">
         <button className="back-btn" onClick={() => navigate('/matches')}>←</button>
-        <h2>{partner?.name || 'Chat'}</h2>
-        <span className={`socket-status ${connected ? 'online' : 'offline'}`} />
+        <img src={partner?.photos?.[0] || 'https://via.placeholder.com/36x36?text=User'} alt="" className="chat-partner-avatar" />
+        <div className="chat-partner-info">
+          <h2>{partner?.name || 'Chat'}</h2>
+          <span className={`socket-status ${connected ? 'online' : 'offline'}`} />
+        </div>
       </div>
       <div className="chat-messages">
         <MessageList messages={messages} currentUserId={user?._id} />
-        {typing && <div className="typing-indicator"><span /><span /><span /></div>}
       </div>
       <div className="chat-input">
         <MessageInput onSend={handleSendMessage} receiverId={matchId} />

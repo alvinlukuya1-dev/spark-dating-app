@@ -48,6 +48,17 @@ router.get('/me', authenticateToken, async (req: Request, res: Response) => {
   }
 });
 
+router.get('/:userId', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.params.userId).select('-password');
+    if (!user) return res.status(404).json({ msg: 'User not found' });
+    res.json(user);
+  } catch (err: any) {
+    console.error(err.message);
+    res.status(500).send('Server error');
+  }
+});
+
 // @route   PUT api/profile
 // @desc    Update profile
 // @access  Private

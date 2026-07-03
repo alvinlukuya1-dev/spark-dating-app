@@ -34,8 +34,8 @@ const Matches = () => {
     }
   };
 
-  const handleMatchClick = (matchId) => {
-    navigate(`/chat/${matchId}`);
+  const handleMatchClick = (match) => {
+    navigate(`/chat/${match.user.id}`, { state: { partner: match.user } });
   };
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>;
