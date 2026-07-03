@@ -938,6 +938,36 @@ body[data-theme="dark"] {
 
 .post-form .btn { width: 100%; }
 
+.post-image-upload { margin-bottom: 10px; }
+
+.upload-btn {
+  background: #f0f0f0;
+  border: 2px dashed #ddd;
+  border-radius: 10px;
+  padding: 10px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  width: 100%;
+  transition: border-color 0.2s;
+}
+
+.upload-btn:hover { border-color: #ff6b6b; }
+
+.upload-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-top: 8px;
+}
+
+[data-theme="dark"] .upload-btn {
+  background: #0f3460;
+  border-color: #1a2744;
+  color: #e0e0e0;
+}
+[data-theme="dark"] .upload-btn:hover { border-color: #ff6b6b; }
+
 .posts-feed {
   display: flex;
   flex-direction: column;

@@ -1,15 +1,16 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import NavBar from '../components/NavBar';
 
 const Posts = () => {
-  const navigate = useNavigate();
   const { token } = useAuth();
   const [posts, setPosts] = useState([]);
   const [content, setContent] = useState('');
-  const [image, setImage] = useState('');
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState('');
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef(null);
 
   const loadPosts = useCallback(async () => {
     try {
@@ -26,18 +27,31 @@ const Posts = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!content.trim()) return;
+    if (!content.trim() && !imageFile) return;
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('content', content);
+    if (imageFile) formData.append('image', imageFile);
     const res = await fetch('/api/posts', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ content, image })
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
     });
     if (res.ok) {
       const post = await res.json();
       setPosts(prev => [post, ...prev]);
       setContent('');
-      setImage('');
+      setImageFile(null);
+      setPreview('');
     }
+    setUploading(false);
+  };
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setImageFile(file);
+    setPreview(URL.createObjectURL(file));
   };
 
   const handleLike = async (postId) => {
@@ -65,13 +79,22 @@ const Posts = () => {
             rows={3}
             maxLength={1000}
           />
-          <input
-            type="text"
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="Image URL (optional)"
-          />
-          <button type="submit" className="btn btn-primary">Post</button>
+          <div className="post-image-upload">
+            <button type="button" className="upload-btn" onClick={() => fileRef.current?.click()}>
+              📷 {preview ? 'Change Photo' : 'Add Photo'}
+            </button>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              hidden
+            />
+            {preview && <img src={preview} alt="" className="upload-preview" />}
+          </div>
+          <button type="submit" disabled={uploading || (!content.trim() && !imageFile)} className="btn btn-primary">
+            {uploading ? 'Posting...' : 'Post'}
+          </button>
         </form>
         <div className="posts-feed">
           {posts.length === 0 && <div className="empty-state"><span>📝</span><p>No posts yet. Be the first!</p></div>}
