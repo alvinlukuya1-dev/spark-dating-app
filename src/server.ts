@@ -9,6 +9,7 @@ import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
 import swipeRoutes from './routes/swipe';
 import chatRoutes from './routes/chat';
+import postRoutes from './routes/posts';
 import { setupSocket, notifyNewMatch } from './socket';
 
 dotenv.config();
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/swipe', swipeRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/posts', postRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });

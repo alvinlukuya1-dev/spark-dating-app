@@ -26,7 +26,7 @@ const Register = () => {
       if (response.ok) {
         // Auto-login after registration
         login(data.token);
-        navigate('/discover');
+        navigate('/discover', { replace: true });
       } else {
         setError(data.msg || 'Registration failed');
       }

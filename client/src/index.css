@@ -835,6 +835,181 @@ a { text-decoration: none; color: inherit; }
   to { transform: rotate(360deg); }
 }
 
+/* DARK MODE */
+[data-theme="dark"] body,
+body[data-theme="dark"] {
+  background: #1a1a2e !important;
+  color: #e0e0e0 !important;
+}
+
+[data-theme="dark"] .page,
+[data-theme="dark"] .nav,
+[data-theme="dark"] .chat-page,
+[data-theme="dark"] .chat-header,
+[data-theme="dark"] .chat-input,
+[data-theme="dark"] .auth-box,
+[data-theme="dark"] .match-card,
+[data-theme="dark"] .swipe-card,
+[data-theme="dark"] .post-card {
+  background: #16213e !important;
+  color: #e0e0e0 !important;
+  border-color: #0f3460 !important;
+}
+
+[data-theme="dark"] .nav { border-top-color: #0f3460 !important; }
+[data-theme="dark"] .nav a { color: #888 !important; }
+[data-theme="dark"] .nav a.active, [data-theme="dark"] .nav a:hover { color: #ff6b6b !important; }
+[data-theme="dark"] .chat-header { border-bottom-color: #0f3460 !important; }
+[data-theme="dark"] .chat-input { border-top-color: #0f3460 !important; }
+[data-theme="dark"] .match-card:hover { background: #1a2744 !important; }
+[data-theme="dark"] .profile-details { background: #1a2744 !important; }
+[data-theme="dark"] .detail-item { border-bottom-color: #0f3460 !important; }
+[data-theme="dark"] .input-group input,
+[data-theme="dark"] .input-group select,
+[data-theme="dark"] .message-input textarea {
+  background: #0f3460 !important;
+  border-color: #1a2744 !important;
+  color: #e0e0e0 !important;
+}
+[data-theme="dark"] .message-bubble.other {
+  background: #0f3460 !important;
+  color: #e0e0e0 !important;
+}
+[data-theme="dark"] .interest-tag { background: #0f3460 !important; color: #aaa !important; }
+[data-theme="dark"] .empty-state { color: #888 !important; }
+[data-theme="dark"] .chat-messages { background: #16213e !important; }
+[data-theme="dark"] .post-form textarea,
+[data-theme="dark"] .post-form input {
+  background: #0f3460 !important;
+  border-color: #1a2744 !important;
+  color: #e0e0e0 !important;
+}
+[data-theme="dark"] .swipe-card .card-info { background: #16213e !important; }
+
+/* THEME BUTTON */
+.theme-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+}
+
+/* POSTS */
+.posts-page {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.post-form {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+.post-form textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  font-size: 15px;
+  resize: none;
+  outline: none;
+  font-family: inherit;
+  margin-bottom: 8px;
+}
+
+.post-form textarea:focus { border-color: #ff6b6b; }
+
+.post-form input {
+  width: 100%;
+  padding: 8px 14px;
+  border: 2px solid #eee;
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+  margin-bottom: 10px;
+}
+
+.post-form input:focus { border-color: #ff6b6b; }
+
+.post-form .btn { width: 100%; }
+
+.posts-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.post-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+}
+
+.post-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.post-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.post-content {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+
+.post-image {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.post-actions {
+  display: flex;
+  gap: 20px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.post-action-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  cursor: pointer;
+  color: inherit;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.post-action-btn:hover { background: #f0f0f0; }
+
+/* SOCKET STATUS */
+.socket-status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-left: auto;
+}
+
+.socket-status.online { background: #00b894; }
+.socket-status.offline { background: #d63031; }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }

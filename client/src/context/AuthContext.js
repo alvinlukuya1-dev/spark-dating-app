@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       const decoded = jwt_decode(token);
       if (decoded?.user) {
-        setUser(decoded.user);
+        setUser({ ...decoded.user, _id: decoded.user.id });
       } else {
         setUser(null);
       }

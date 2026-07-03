@@ -1,6 +1,20 @@
 [build]
   publish = "build"
 
+# Proxy API calls to Render backend (these MUST come first)
+[[redirects]]
+  from = "/api/*"
+  to = "https://pwani-sparks.onrender.com/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/socket.io/*"
+  to = "https://pwani-sparks.onrender.com/socket.io/:splat"
+  status = 200
+  force = true
+
+# SPA fallback (must come last)
 [[redirects]]
   from = "/*"
   to = "/index.html"

@@ -6,20 +6,13 @@ const MessageInput = ({ onSend, receiverId }) => {
   const [mediaType, setMediaType] = useState('text'); // text, image, file
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (!message.trim() && !mediaUrl) return;
-    setLoading(true);
-    try {
-      await onSend(message, mediaUrl, mediaType);
-      setMessage('');
-      setMediaUrl('');
-      setMediaType('text');
-    } catch (err) {
-      console.error('Error sending message:', err);
-    } finally {
-      setLoading(false);
-    }
+    onSend(message, mediaUrl, mediaType);
+    setMessage('');
+    setMediaUrl('');
+    setMediaType('text');
   };
 
   const handleFileChange = (e) => {
