@@ -66,7 +66,8 @@ router.post('/like/:postId', authenticateToken, async (req: Request, res: Respon
     if (idx > -1) post.likes.splice(idx, 1);
     else post.likes.push(userId as any);
     await post.save();
-    res.json({ likes: post.likes.length });
+    const liked = post.likes.some((id: any) => id.equals(userId));
+    res.json({ likes: post.likes.length, liked });
   } catch (err: any) {
     console.error(err.message);
     res.status(500).send('Server error');

@@ -79,8 +79,8 @@ const Posts = () => {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) {
-      const { likes } = await res.json();
-      setPosts(prev => prev.map(p => p._id === postId ? { ...p, likes: { length: likes } } : p));
+      const { likes, liked } = await res.json();
+      setPosts(prev => prev.map(p => p._id === postId ? { ...p, likes: { count: likes, liked } } : p));
     }
     setLiking(prev => ({ ...prev, [postId]: false }));
   };
@@ -99,7 +99,15 @@ const Posts = () => {
     }
   };
 
-  const isLiked = (post) => post.likes?.length > 0;
+  const isLiked = (post) => {
+    if (post.likes?.liked !== undefined) return post.likes.liked;
+    return post.likes?.length > 0;
+  };
+
+  const likeCount = (post) => {
+    if (post.likes?.count !== undefined) return post.likes.count;
+    return post.likes?.length || 0;
+  };
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>;
 
@@ -166,7 +174,7 @@ const Posts = () => {
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                       </svg>
                     </button>
-                    <span className="ig-likes">{post.likes?.length || 0} {post.likes?.length === 1 ? 'like' : 'likes'}</span>
+                    <span className="ig-likes">{likeCount(post)} {likeCount(post) === 1 ? 'like' : 'likes'}</span>
                   </div>
                   <div className="ig-card-caption">
                     <strong>{post.user?.name}</strong> {post.content}
