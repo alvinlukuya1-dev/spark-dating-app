@@ -12,18 +12,14 @@ const postStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'spark/posts',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
-  } as any,
+  },
 });
 
 const avatarStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'spark/avatars',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    transformation: [{ width: 400, height: 400, crop: 'limit', quality: 'auto' }],
-  } as any,
+  },
 });
 
 export const uploadPost = multer({

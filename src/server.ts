@@ -52,6 +52,15 @@ app.post('/api/cleanup-posts', async (_req, res) => {
   }
 });
 
+app.get('/api/debug-env', (_req, res) => {
+  res.json({
+    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ? 'SET' : 'MISSING',
+    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
+    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING',
+    MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'MISSING',
+  });
+});
+
 setupSocket(io);
 
 const PORT = process.env.PORT || 4000;
