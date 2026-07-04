@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NavBar from '../components/NavBar';
 
@@ -24,7 +25,9 @@ const Posts = () => {
   const [uploading, setUploading] = useState(false);
   const [commentText, setCommentText] = useState({});
   const [liking, setLiking] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
   const fileRef = useRef(null);
+  const navigate = useNavigate();
 
   const loadPosts = useCallback(async () => {
     try {
@@ -103,7 +106,23 @@ const Posts = () => {
   return (
     <div className="page">
       <div className="ig-feed">
-        <div className="ig-header"><h1>Feed</h1></div>
+        <div className="ig-header">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <div className="ig-top-search">
+            <input
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && searchQuery.trim()) { navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`); } }}
+              placeholder="Search users..."
+            />
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+        </div>
         <form onSubmit={handleSubmit} className="ig-create">
           <div className="ig-create-top">
             <img src={user?.photos?.[0] || 'https://via.placeholder.com/32x32?text=U'} alt="" className="ig-create-avatar" />
