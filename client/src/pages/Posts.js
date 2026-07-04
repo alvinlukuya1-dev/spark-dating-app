@@ -46,20 +46,27 @@ const Posts = () => {
     e.preventDefault();
     if (!content.trim() && !imageFile) return;
     setUploading(true);
-    const formData = new FormData();
-    formData.append('content', content);
-    if (imageFile) formData.append('image', imageFile);
-    const res = await fetch('/api/posts', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData
-    });
-    if (res.ok) {
-      const post = await res.json();
-      setPosts(prev => [post, ...prev]);
-      setContent('');
-      setImageFile(null);
-      setPreview('');
+    try {
+      const formData = new FormData();
+      formData.append('content', content);
+      if (imageFile) formData.append('image', imageFile);
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+      if (res.ok) {
+        const post = await res.json();
+        setPosts(prev => [post, ...prev]);
+        setContent('');
+        setImageFile(null);
+        setPreview('');
+      } else {
+        const err = await res.text();
+        alert('Upload failed: ' + err);
+      }
+    } catch (e) {
+      alert('Network error: ' + e.message);
     }
     setUploading(false);
   };

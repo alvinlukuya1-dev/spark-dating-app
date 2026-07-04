@@ -73,18 +73,25 @@ const Profile = () => {
     e.preventDefault();
     if (!newContent.trim() && !newImage) return;
     setUploading(true);
-    const formData = new FormData();
-    formData.append('content', newContent);
-    if (newImage) formData.append('image', newImage);
-    const res = await fetch('/api/posts', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-      body: formData
-    });
-    if (res.ok) {
-      const post = await res.json();
-      setPosts(prev => [post, ...prev]);
-      closeModal();
+    try {
+      const formData = new FormData();
+      formData.append('content', newContent);
+      if (newImage) formData.append('image', newImage);
+      const res = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+      if (res.ok) {
+        const post = await res.json();
+        setPosts(prev => [post, ...prev]);
+        closeModal();
+      } else {
+        const err = await res.text();
+        alert('Upload failed: ' + err);
+      }
+    } catch (e) {
+      alert('Network error: ' + e.message);
     }
     setUploading(false);
   };
