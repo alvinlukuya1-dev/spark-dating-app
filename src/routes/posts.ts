@@ -25,13 +25,14 @@ router.post('/', authenticateToken, uploadPost.single('image'), async (req: Requ
   try {
     const { content } = req.body;
     const image = (req.file as any)?.path || '';
+    console.log('Upload received:', { content, image, file: req.file ? 'yes' : 'no' });
     const post = new Post({ user: req.user!._id, content, image });
     await post.save();
     const populated = await Post.findById(post._id).populate('user', 'name photos');
     res.json(populated);
   } catch (err: any) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('POST /api/posts error:', err);
+    res.status(500).json({ msg: err.message, stack: err.stack });
   }
 });
 
