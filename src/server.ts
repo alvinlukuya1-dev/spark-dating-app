@@ -11,6 +11,7 @@ import swipeRoutes from './routes/swipe';
 import chatRoutes from './routes/chat';
 import postRoutes from './routes/posts';
 import searchRoutes from './routes/search';
+import { Post } from './models/Post';
 import { setupSocket, notifyNewMatch } from './socket';
 
 dotenv.config();
@@ -40,6 +41,15 @@ app.use('/api/users', searchRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });
+});
+
+app.post('/api/cleanup-posts', async (_req, res) => {
+  try {
+    const result = await Post.deleteMany({});
+    res.json({ msg: `Deleted ${result.deletedCount} posts` });
+  } catch (err: any) {
+    res.status(500).json({ msg: err.message });
+  }
 });
 
 setupSocket(io);
