@@ -12,14 +12,14 @@ const postStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'spark/posts',
-  },
+  } as any,
 });
 
 const avatarStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'spark/avatars',
-  },
+  } as any,
 });
 
 export const uploadPost = multer({
