@@ -2,38 +2,9 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { User } from '../models/User';
 import { check, validationResult } from 'express-validator';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import { uploadAvatar } from '../config/cloudinary';
 
 const router = Router();
-
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (_req: any, file: any, cb: any) => {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed!'));
-    }
-  }
-});
 
 router.get('/me', authenticateToken, async (req: Request, res: Response) => {
   try {
@@ -59,16 +30,12 @@ router.get('/:userId', authenticateToken, async (req: Request, res: Response) =>
   }
 });
 
-// @route   PUT api/profile
-// @desc    Update profile
-// @access  Private
 router.put(
   '/',
   [
     authenticateToken,
     check('name').optional().isLength({ min: 1 }).trim(),
     check('bio').optional().isLength({ max: 500 }),
-    // Add other fields as needed
   ],
   async (req: Request, res: Response) => {
     const errors = validationResult(req);
@@ -84,7 +51,6 @@ router.put(
         return res.status(404).json({ msg: 'User not found' });
       }
 
-      // Update fields if provided
       if (name !== undefined) user.name = name;
       if (bio !== undefined) user.bio = bio;
       if (birthDate !== undefined) user.birthDate = new Date(birthDate);
@@ -94,7 +60,6 @@ router.put(
       if (interests !== undefined) user.interests = Array.isArray(interests) ? interests : user.interests;
 
       await user.save();
-
       res.json({ msg: 'Profile updated', user });
     } catch (err: any) {
       console.error(err.message);
@@ -105,7 +70,7 @@ router.put(
 
 router.post(
   '/photo',
-  [authenticateToken, upload.single('photo')],
+  [authenticateToken, uploadAvatar.single('photo')],
   async (req: Request, res: Response) => {
     try {
       if (!req.file) {
@@ -117,15 +82,12 @@ router.post(
         return res.status(404).json({ msg: 'User not found' });
       }
 
-      const photoUrl = `/uploads/${(req.file as any).filename}`;
+      const photoUrl = (req.file as any).path;
       user.photos.push(photoUrl);
       await user.save();
 
       res.json({ msg: 'Photo uploaded successfully', photoUrl });
     } catch (err: any) {
-      if (err instanceof multer.MulterError) {
-        return res.status(400).json({ msg: `Upload error: ${err.message}` });
-      }
       res.status(500).send('Server error');
     }
   }
@@ -144,19 +106,13 @@ router.delete(
 
       const photoUrl = `/uploads/${filename}`;
       const initialLength = user.photos.length;
-      user.photos = user.photos.filter(url => url !== photoUrl);
+      user.photos = user.photos.filter(url => !url.includes(filename));
 
       if (user.photos.length === initialLength) {
         return res.status(404).json({ msg: 'Photo not found' });
       }
 
-      const filePath = path.join(process.cwd(), 'uploads', filename);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-      }
-
       await user.save();
-
       res.json({ msg: 'Photo removed successfully' });
     } catch (err: any) {
       console.error(err.message);
