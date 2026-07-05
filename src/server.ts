@@ -4,7 +4,6 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import path from 'path';
 import authRoutes from './routes/auth';
 import profileRoutes from './routes/profile';
 import swipeRoutes from './routes/swipe';
@@ -13,7 +12,7 @@ import postRoutes from './routes/posts';
 import searchRoutes from './routes/search';
 import { Post } from './models/Post';
 import { setupSocket, notifyNewMatch } from './socket';
-import { initGridFS, getGridFS } from './config/cloudinary';
+
 
 dotenv.config();
 mongoose.set('strictQuery', true);
@@ -55,23 +54,10 @@ app.post('/api/cleanup-posts', async (_req, res) => {
 
 app.get('/api/debug-env', (_req, res) => {
   res.json({
-    CLOUDINARY_CLOUD_NAME: process.env.CLOUDINARY_CLOUD_NAME ? 'SET' : 'MISSING',
-    CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY ? 'SET' : 'MISSING',
-    CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET ? 'SET' : 'MISSING',
+    SUPABASE_URL: process.env.SUPABASE_URL ? 'SET' : 'MISSING',
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY ? 'SET' : 'MISSING',
     MONGODB_URI: process.env.MONGODB_URI ? 'SET' : 'MISSING',
   });
-});
-
-app.get('/api/files/:fileId', async (req, res) => {
-  try {
-    const { ObjectId } = await import('mongodb');
-    const gfs = getGridFS();
-    const downloadStream = gfs.openDownloadStream(new ObjectId(req.params.fileId));
-    downloadStream.on('error', () => res.status(404).json({ msg: 'File not found' }));
-    downloadStream.pipe(res);
-  } catch {
-    res.status(404).json({ msg: 'File not found' });
-  }
 });
 
 setupSocket(io);
@@ -82,9 +68,6 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dating
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   mongoose.connect(MONGODB_URI)
-    .then(() => {
-      console.log('Connected to MongoDB');
-      initGridFS();
-    })
+    .then(() => console.log('Connected to MongoDB'))
     .catch((err) => console.error('MongoDB connection error (app will work once MongoDB is running):', err.message));
 });

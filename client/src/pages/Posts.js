@@ -179,7 +179,7 @@ const Posts = () => {
                 </div>
                 {post.image && (
                   <div className="ig-card-image" onDoubleClick={() => handleLike(post._id)}>
-                    <img src={post.image.startsWith('http') || post.image.startsWith('/api/') ? post.image : `/api/files/${post.image}`} alt="" />
+                    <img src={post.image?.startsWith('http') ? post.image : ''} alt="" />
                     {liked && <div className="ig-heart-anim">❤️</div>}
                   </div>
                 )}

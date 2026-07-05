@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { Post } from '../models/Post';
-import { uploadPost, saveToGridFS, deleteFromGridFS } from '../config/cloudinary';
+import { uploadPost, saveToSupabase, deleteFromSupabase } from '../config/cloudinary';
 
 const router = Router();
 
@@ -53,7 +53,7 @@ router.post('/', authenticateToken, (req: Request, res: Response) => {
     try {
       const { content } = req.body;
       let image = '';
-      if (req.file) image = await saveToGridFS(req.file);
+      if (req.file) image = await saveToSupabase(req.file);
       if (!content?.trim() && !image) {
         return res.status(400).json({ msg: 'Add text or an image to post' });
       }
@@ -78,7 +78,7 @@ router.delete('/:postId', authenticateToken, async (req: Request, res: Response)
     if (post.user.toString() !== req.user!._id.toString()) {
       return res.status(403).json({ msg: 'Not authorized' });
     }
-    if (post.image) await deleteFromGridFS(post.image);
+    if (post.image) await deleteFromSupabase(post.image);
     await Post.findByIdAndDelete(req.params.postId);
     res.json({ msg: 'Post deleted' });
   } catch (err: any) {

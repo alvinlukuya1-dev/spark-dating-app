@@ -1,34 +1,27 @@
 import multer from 'multer';
-import mongoose from 'mongoose';
-import { GridFSBucket, ObjectId } from 'mongodb';
+import { createClient } from '@supabase/supabase-js';
 
-let gfs: GridFSBucket;
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || '';
+export const supabase = createClient(supabaseUrl, supabaseKey);
+const BUCKET = 'spark-images';
 
-export function initGridFS() {
-  const db = mongoose.connection.db;
-  if (!db) throw new Error('MongoDB not connected');
-  gfs = new GridFSBucket(db, { bucketName: 'uploads' });
-}
-
-export function getGridFS() {
-  return gfs;
-}
-
-export async function saveToGridFS(file: Express.Multer.File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const uploadStream = gfs.openUploadStream(file.originalname, {
-      contentType: file.mimetype,
-    });
-    uploadStream.on('finish', () => resolve(uploadStream.id.toString()));
-    uploadStream.on('error', reject);
-    uploadStream.end(file.buffer);
+export async function saveToSupabase(file: Express.Multer.File): Promise<string> {
+  const ext = file.originalname.split('.').pop() || 'jpg';
+  const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { data, error } = await supabase.storage.from(BUCKET).upload(fileName, file.buffer, {
+    contentType: file.mimetype,
+    cacheControl: '3600',
   });
+  if (error) throw new Error(error.message);
+  const { data: { publicUrl } } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+  return publicUrl;
 }
 
-export async function deleteFromGridFS(fileId: string) {
-  try {
-    await gfs.delete(new ObjectId(fileId));
-  } catch {}
+export async function deleteFromSupabase(url: string) {
+  const fileName = url.split('/').pop();
+  if (!fileName) return;
+  try { await supabase.storage.from(BUCKET).remove([fileName]); } catch {}
 }
 
 const memoryStorage = multer.memoryStorage();

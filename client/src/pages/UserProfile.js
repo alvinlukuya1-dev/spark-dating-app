@@ -59,8 +59,7 @@ const UserProfile = () => {
           {posts.length === 0 && <div className="empty-state"><span>📷</span><p>No posts yet</p></div>}
           {posts.map(post => (
             <div key={post._id} className="ig-profile-post">
-              {post.image && <img src={post.image.startsWith('http') || post.image.startsWith('/api/') ? post.image : `/api/files/${post.image}`} alt="" />}
-              {!post.image && <div className="ig-profile-post-text">{post.content}</div>}
+              {post.image?.startsWith('http') ? <img src={post.image} alt="" /> : post.content ? <div className="ig-profile-post-text">{post.content}</div> : null}
               <div className="ig-profile-post-overlay">
                 <span>❤️ {post.likes?.length || 0}</span>
                 <span>💬 {post.comments?.length || 0}</span>
