@@ -86,10 +86,19 @@ const Posts = () => {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) {
-      const { likes, liked } = await res.json();
-      setPosts(prev => prev.map(p => p._id === postId ? { ...p, likes: { count: likes, liked } } : p));
+      const { likeCount, liked } = await res.json();
+      setPosts(prev => prev.map(p => p._id === postId ? { ...p, liked, likeCount } : p));
     }
     setLiking(prev => ({ ...prev, [postId]: false }));
+  };
+
+  const handleDelete = async (postId) => {
+    if (!window.confirm('Delete this post?')) return;
+    const res = await fetch(`/api/posts/${postId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) setPosts(prev => prev.filter(p => p._id !== postId));
   };
 
   const handleComment = async (postId) => {
@@ -106,15 +115,8 @@ const Posts = () => {
     }
   };
 
-  const isLiked = (post) => {
-    if (post.likes?.liked !== undefined) return post.likes.liked;
-    return post.likes?.length > 0;
-  };
-
-  const likeCount = (post) => {
-    if (post.likes?.count !== undefined) return post.likes.count;
-    return post.likes?.length || 0;
-  };
+  const isLiked = (post) => post.liked || false;
+  const likeCount = (post) => post.likeCount || 0;
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>;
 
@@ -167,10 +169,17 @@ const Posts = () => {
                     <strong>{post.user?.name || 'Unknown'}</strong>
                     <span className="ig-card-time">{timeAgo(post.createdAt)}</span>
                   </div>
+                  {post.user?._id === user?._id && (
+                    <button onClick={() => handleDelete(post._id)} className="ig-delete-btn" title="Delete post">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                      </svg>
+                    </button>
+                  )}
                 </div>
                 {post.image && (
                   <div className="ig-card-image" onDoubleClick={() => handleLike(post._id)}>
-                    <img src={post.image} alt="" />
+                    <img src={post.image.startsWith('http') || post.image.startsWith('/api/') ? post.image : `/api/files/${post.image}`} alt="" />
                     {liked && <div className="ig-heart-anim">❤️</div>}
                   </div>
                 )}
@@ -183,9 +192,11 @@ const Posts = () => {
                     </button>
                     <span className="ig-likes">{likeCount(post)} {likeCount(post) === 1 ? 'like' : 'likes'}</span>
                   </div>
-                  <div className="ig-card-caption">
-                    <strong>{post.user?.name}</strong> {post.content}
-                  </div>
+                  {post.content && (
+                    <div className="ig-card-caption">
+                      <strong>{post.user?.name}</strong> {post.content}
+                    </div>
+                  )}
                   {post.comments?.length > 0 && (
                     <div className="ig-comments">
                       {post.comments.map((c, i) => (

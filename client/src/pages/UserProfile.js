@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NavBar from '../components/NavBar';
 
@@ -9,7 +9,6 @@ const UserProfile = () => {
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
 
   useEffect(() => {
     loadUser();
@@ -60,7 +59,7 @@ const UserProfile = () => {
           {posts.length === 0 && <div className="empty-state"><span>📷</span><p>No posts yet</p></div>}
           {posts.map(post => (
             <div key={post._id} className="ig-profile-post">
-              {post.image && <img src={post.image} alt="" />}
+              {post.image && <img src={post.image.startsWith('http') || post.image.startsWith('/api/') ? post.image : `/api/files/${post.image}`} alt="" />}
               {!post.image && <div className="ig-profile-post-text">{post.content}</div>}
               <div className="ig-profile-post-overlay">
                 <span>❤️ {post.likes?.length || 0}</span>

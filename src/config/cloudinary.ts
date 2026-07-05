@@ -1,28 +1,40 @@
 import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import mongoose from 'mongoose';
+import { GridFSBucket, ObjectId } from 'mongodb';
 
-const uploadsDir = path.join(process.cwd(), 'uploads', 'posts');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+let gfs: GridFSBucket;
 
-const postStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadsDir),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-  },
-});
+export function initGridFS() {
+  const db = mongoose.connection.db;
+  if (!db) throw new Error('MongoDB not connected');
+  gfs = new GridFSBucket(db, { bucketName: 'uploads' });
+}
 
-const avatarStorage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, path.join(process.cwd(), 'uploads', 'avatars')),
-  filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname) || '.jpg';
-    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
-  },
-});
+export function getGridFS() {
+  return gfs;
+}
+
+export async function saveToGridFS(file: Express.Multer.File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const uploadStream = gfs.openUploadStream(file.originalname, {
+      contentType: file.mimetype,
+    });
+    uploadStream.on('finish', () => resolve(uploadStream.id.toString()));
+    uploadStream.on('error', reject);
+    uploadStream.end(file.buffer);
+  });
+}
+
+export async function deleteFromGridFS(fileId: string) {
+  try {
+    await gfs.delete(new ObjectId(fileId));
+  } catch {}
+}
+
+const memoryStorage = multer.memoryStorage();
 
 export const uploadPost = multer({
-  storage: postStorage,
+  storage: memoryStorage,
   limits: { fileSize: 10 * 1024 * 1024 },
   fileFilter: (_req: any, file: any, cb: any) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
@@ -31,15 +43,10 @@ export const uploadPost = multer({
 });
 
 export const uploadAvatar = multer({
-  storage: avatarStorage,
+  storage: memoryStorage,
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req: any, file: any, cb: any) => {
     if (file.mimetype.startsWith('image/')) cb(null, true);
     else cb(new Error('Only images allowed'));
   }
 });
-
-export function cloudinaryDelete(url: string) {
-  const filePath = path.join(process.cwd(), url.replace(/^\//, ''));
-  try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch {}
-}

@@ -13,6 +13,7 @@ import postRoutes from './routes/posts';
 import searchRoutes from './routes/search';
 import { Post } from './models/Post';
 import { setupSocket, notifyNewMatch } from './socket';
+import { initGridFS, getGridFS } from './config/cloudinary';
 
 dotenv.config();
 mongoose.set('strictQuery', true);
@@ -31,7 +32,6 @@ app.set('notifyNewMatch', notifyNewMatch);
 
 app.use(cors());
 app.use(express.json());
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
@@ -62,6 +62,18 @@ app.get('/api/debug-env', (_req, res) => {
   });
 });
 
+app.get('/api/files/:fileId', async (req, res) => {
+  try {
+    const { ObjectId } = await import('mongodb');
+    const gfs = getGridFS();
+    const downloadStream = gfs.openDownloadStream(new ObjectId(req.params.fileId));
+    downloadStream.on('error', () => res.status(404).json({ msg: 'File not found' }));
+    downloadStream.pipe(res);
+  } catch {
+    res.status(404).json({ msg: 'File not found' });
+  }
+});
+
 setupSocket(io);
 
 const PORT = 4000;
@@ -70,6 +82,9 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/dating
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
   mongoose.connect(MONGODB_URI)
-    .then(() => console.log('Connected to MongoDB'))
+    .then(() => {
+      console.log('Connected to MongoDB');
+      initGridFS();
+    })
     .catch((err) => console.error('MongoDB connection error (app will work once MongoDB is running):', err.message));
 });
