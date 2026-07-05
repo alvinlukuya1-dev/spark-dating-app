@@ -51,11 +51,15 @@ const Chat = () => {
   useEffect(() => { loadChat(); }, [loadChat]);
 
   const handleSendMessage = async (content, mediaUrl, type) => {
-    await fetch(`/api/chat/messages/${matchId}`, {
+    const res = await fetch(`/api/chat/messages/${matchId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify({ content, mediaUrl, type })
     });
+    if (res.ok) {
+      const msg = await res.json();
+      setMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
+    }
   };
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>;

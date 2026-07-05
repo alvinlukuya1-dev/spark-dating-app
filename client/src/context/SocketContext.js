@@ -17,8 +17,10 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (!token) return;
     const socket = io(SOCKET_URL, {
-      transports: ['websocket', 'polling'],
-      reconnection: true
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
     });
     socketRef.current = socket;
     forceUpdate(n => n + 1);
