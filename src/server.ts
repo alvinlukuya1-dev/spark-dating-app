@@ -14,6 +14,7 @@ import { Post } from './models/Post';
 import { setupSocket, notifyNewMatch } from './socket';
 
 dotenv.config();
+mongoose.set('strictQuery', true);
 
 const app = express();
 const server = http.createServer(app);
