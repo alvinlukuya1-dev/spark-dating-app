@@ -1,29 +1,24 @@
-import { v2 as cloudinary } from 'cloudinary';
-import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import multer from 'multer';
+import path from 'path';
+import fs from 'fs';
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+const uploadsDir = path.join(process.cwd(), 'uploads', 'posts');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+
+const postStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, uploadsDir),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
 });
 
-const postStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'spark/posts',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
-  } as any,
-});
-
-const avatarStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: 'spark/avatars',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
-    transformation: [{ width: 400, height: 400, crop: 'fill', quality: 'auto' }],
-  } as any,
+const avatarStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => cb(null, path.join(process.cwd(), 'uploads', 'avatars')),
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname) || '.jpg';
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`);
+  },
 });
 
 export const uploadPost = multer({
@@ -44,12 +39,7 @@ export const uploadAvatar = multer({
   }
 });
 
-export async function cloudinaryDelete(url: string) {
-  const parts = url.split('/');
-  const publicId = parts.slice(parts.indexOf('spark')).join('/').replace(/\.[^.]+$/, '');
-  try {
-    await cloudinary.uploader.destroy(publicId);
-  } catch {}
+export function cloudinaryDelete(url: string) {
+  const filePath = path.join(process.cwd(), url.replace(/^\//, ''));
+  try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch {}
 }
-
-export default cloudinary;

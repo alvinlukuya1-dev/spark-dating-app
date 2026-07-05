@@ -52,7 +52,7 @@ router.post('/', authenticateToken, (req: Request, res: Response) => {
     }
     try {
       const { content } = req.body;
-      const image = (req.file as any)?.path || '';
+      const image = req.file ? `/uploads/posts/${req.file.filename}` : '';
       if (!content?.trim() && !image) {
         return res.status(400).json({ msg: 'Add text or an image to post' });
       }
