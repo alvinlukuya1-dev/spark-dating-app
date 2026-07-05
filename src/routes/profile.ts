@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { User } from '../models/User';
 import { check, validationResult } from 'express-validator';
-import { uploadAvatar } from '../config/cloudinary';
+import { uploadAvatar, saveToSupabase, deleteFromSupabase } from '../config/cloudinary';
 
 const router = Router();
 
@@ -82,7 +82,7 @@ router.post(
         return res.status(404).json({ msg: 'User not found' });
       }
 
-      const photoUrl = (req.file as any).path;
+      const photoUrl = await saveToSupabase(req.file);
       user.photos.push(photoUrl);
       await user.save();
 
@@ -94,25 +94,25 @@ router.post(
 );
 
 router.delete(
-  '/photo/:filename',
+  '/photo/:index',
   authenticateToken,
   async (req: Request, res: Response) => {
     try {
-      const filename = req.params.filename;
+      const index = parseInt(req.params.index);
       const user = await User.findById(req.user!._id);
       if (!user) {
         return res.status(404).json({ msg: 'User not found' });
       }
 
-      const photoUrl = `/uploads/${filename}`;
-      const initialLength = user.photos.length;
-      user.photos = user.photos.filter(url => !url.includes(filename));
-
-      if (user.photos.length === initialLength) {
+      if (index < 0 || index >= user.photos.length) {
         return res.status(404).json({ msg: 'Photo not found' });
       }
 
+      const photoUrl = user.photos[index];
+      await deleteFromSupabase(photoUrl);
+      user.photos.splice(index, 1);
       await user.save();
+
       res.json({ msg: 'Photo removed successfully' });
     } catch (err: any) {
       console.error(err.message);

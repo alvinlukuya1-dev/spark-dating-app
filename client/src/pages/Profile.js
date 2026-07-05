@@ -48,12 +48,13 @@ const Profile = () => {
     } catch {}
   };
 
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarFileRef = useRef(null);
+
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
-
-  const openModal = () => { setShowModal(true); };
 
   const closeModal = () => {
     setShowModal(false);
@@ -61,6 +62,37 @@ const Profile = () => {
     setNewImage(null);
     setNewPreview('');
   };
+
+  const handleAvatarSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    uploadAvatar(file);
+  };
+
+  const uploadAvatar = async (file) => {
+    setAvatarUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await fetch('/api/profile/photo', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProfile(prev => prev ? { ...prev, photos: [data.photoUrl, ...(prev.photos || [])] } : prev);
+      } else {
+        const err = await res.text();
+        alert('Upload failed: ' + err);
+      }
+    } catch (e) {
+      alert('Network error: ' + e.message);
+    }
+    setAvatarUploading(false);
+  };
+
+  const openModal = () => { setShowModal(true); };
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -115,6 +147,24 @@ const Profile = () => {
               <button className="ig-add-post-btn" onClick={openModal}>
                 <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+              <input
+                ref={avatarFileRef}
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarSelect}
+                hidden
+              />
+              <button
+                className="ig-add-post-btn"
+                onClick={() => avatarFileRef.current?.click()}
+                disabled={avatarUploading}
+                title={avatarUploading ? 'Uploading...' : 'Change profile photo'}
+              >
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="3"/>
+                  <path d="M12 2v2m0 16v2M2 12h2m16 0h2M6.34 6.34l1.41 1.41m11.32 11.32l1.41 1.41M6.34 17.66l1.41-1.41m11.32-11.32l1.41-1.41"/>
                 </svg>
               </button>
             </div>
