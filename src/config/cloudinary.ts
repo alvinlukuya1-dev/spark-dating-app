@@ -12,6 +12,8 @@ const postStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'spark/posts',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 1200, height: 1200, crop: 'limit', quality: 'auto' }],
   } as any,
 });
 
@@ -19,6 +21,8 @@ const avatarStorage = new CloudinaryStorage({
   cloudinary,
   params: {
     folder: 'spark/avatars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+    transformation: [{ width: 400, height: 400, crop: 'fill', quality: 'auto' }],
   } as any,
 });
 
@@ -39,5 +43,13 @@ export const uploadAvatar = multer({
     else cb(new Error('Only images allowed'));
   }
 });
+
+export async function cloudinaryDelete(url: string) {
+  const parts = url.split('/');
+  const publicId = parts.slice(parts.indexOf('spark')).join('/').replace(/\.[^.]+$/, '');
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch {}
+}
 
 export default cloudinary;
