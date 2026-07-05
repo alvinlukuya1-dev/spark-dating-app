@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../context/SocketContext';
@@ -10,11 +10,26 @@ const Chat = () => {
   const { matchId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { connected, sendMessage: socketSend } = useSocket();
+  const { socket, connected, joinRoom } = useSocket();
   const [messages, setMessages] = useState([]);
   const [partner, setPartner] = useState(location.state?.partner || null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const roomId = [user?._id, matchId].sort().join('_');
+
+  useEffect(() => {
+    if (!socket || !connected) return;
+    joinRoom(`chat_${roomId}`);
+  }, [socket, connected, roomId, joinRoom]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handler = (msg) => {
+      setMessages(prev => prev.some(m => m._id === msg._id) ? prev : [...prev, msg]);
+    };
+    socket.on('newMessage', handler);
+    return () => socket.off('newMessage', handler);
+  }, [socket]);
 
   const loadChat = useCallback(async () => {
     try {
@@ -36,18 +51,11 @@ const Chat = () => {
   useEffect(() => { loadChat(); }, [loadChat]);
 
   const handleSendMessage = async (content, mediaUrl, type) => {
-    if (socketSend && connected) {
-      socketSend(matchId, content, mediaUrl, type);
-    }
-    const res = await fetch(`/api/chat/messages/${matchId}`, {
+    await fetch(`/api/chat/messages/${matchId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${localStorage.getItem('token')}` },
       body: JSON.stringify({ content, mediaUrl, type })
     });
-    if (res.ok) {
-      const newMessage = await res.json();
-      setMessages(prev => [...prev, newMessage]);
-    }
   };
 
   if (loading) return <div className="loading"><div className="spinner"></div></div>;

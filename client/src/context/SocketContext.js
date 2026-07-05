@@ -12,6 +12,7 @@ export const SocketProvider = ({ children }) => {
   const { token, user } = useAuth();
   const [connected, setConnected] = useState(false);
   const socketRef = useRef(null);
+  const [, forceUpdate] = useState(0);
 
   useEffect(() => {
     if (!token) return;
@@ -20,6 +21,7 @@ export const SocketProvider = ({ children }) => {
       reconnection: true
     });
     socketRef.current = socket;
+    forceUpdate(n => n + 1);
 
     socket.on('connect', () => {
       setConnected(true);
@@ -31,15 +33,11 @@ export const SocketProvider = ({ children }) => {
     return () => { socket.disconnect(); socketRef.current = null; };
   }, [token, user]);
 
-  const sendMessage = (receiverId, content, mediaUrl, type) => {
-    socketRef.current?.emit('sendMessage', { receiverId, content, mediaUrl, type });
-  };
-
   const joinRoom = (roomId) => {
     socketRef.current?.emit('joinRoom', roomId);
   };
 
-  const value = { socket: socketRef.current, connected, sendMessage, joinRoom };
+  const value = { socket: socketRef.current, connected, joinRoom };
 
   return (
     <SocketContext.Provider value={value}>
