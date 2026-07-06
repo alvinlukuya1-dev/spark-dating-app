@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { User } from './models/User';
 import { Match } from './models/Match';
 import { Message } from './models/Message';
+import { Notification } from './models/Notification';
 
 export const setupSocket = (io: Server) => {
   io.on('connection', (socket: Socket) => {
@@ -10,8 +11,8 @@ export const setupSocket = (io: Server) => {
     // When a user authenticates, we can associate their socket with their user ID
     // For simplicity, we'll expect the client to emit 'authenticate' with their user ID
     socket.on('authenticate', (userId: string) => {
-      // Store userId on socket for later use
       (socket as any).userId = userId;
+      socket.join(`user_${userId}`);
       console.log(`User ${userId} authenticated on socket ${socket.id}`);
     });
 
@@ -120,17 +121,19 @@ const getRoomId = (userId1: string, userId2: string): string => {
   return `chat_${id1}_${id2}`;
 };
 
-// Function to notify about a new match (to be called from HTTP routes)
 export const notifyNewMatch = (io: Server, user1Id: string, user2Id: string) => {
-  // Fetch user info for both
   Promise.all([
     User.findById(user1Id).select('name photos'),
-    User.findById(user2Id).select('name photos')
-  ]).then(([user1, user2]) => {
+    User.findById(user2Id).select('name photos'),
+    Notification.find({ user: { $in: [user1Id, user2Id] }, from: { $in: [user1Id, user2Id] }, type: 'match' })
+      .populate('from', 'name photos')
+      .sort('-createdAt')
+      .limit(2)
+  ]).then(([user1, user2, notifications]) => {
     if (!user1 || !user2) return;
 
     const matchData = {
-      matchId: new Date().getTime(), // temporary; in reality we'd pass the actual match ID
+      matchId: new Date().getTime(),
       user1: {
         id: user1._id,
         name: user1.name,
@@ -144,12 +147,15 @@ export const notifyNewMatch = (io: Server, user1Id: string, user2Id: string) => 
       matchedAt: new Date()
     };
 
-    // Notify both users via a personal room (e.g., user-specific notification room)
     const room1 = `user_${user1Id}`;
     const room2 = `user_${user2Id}`;
 
     io.to(room1).emit('newMatch', { ...matchData, matchedWith: user2 });
     io.to(room2).emit('newMatch', { ...matchData, matchedWith: user1 });
+
+    notifications.forEach(n => {
+      io.to(`user_${(n as any).user}`).emit('newNotification', n);
+    });
   }).catch(err => {
     console.error('Error notifying new match:', err);
   });

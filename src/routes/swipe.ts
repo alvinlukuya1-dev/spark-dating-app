@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { User } from '../models/User';
 import { Match } from '../models/Match';
+import { Notification } from '../models/Notification';
 import { Types } from 'mongoose';
 
 const router = Router();
@@ -59,6 +60,11 @@ router.post('/like/:userId', authenticateToken, async (req: Request, res: Respon
           user2: userId
         });
         await match.save();
+
+        await Notification.create([
+          { user: currentUserId, from: userId, type: 'match', referenceId: match._id.toString() },
+          { user: userId, from: currentUserId, type: 'match', referenceId: match._id.toString() }
+        ]);
 
         const io = (req.app as any).get('io');
         if (io) {

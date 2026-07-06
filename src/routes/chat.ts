@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { Message } from '../models/Message';
+import { Notification } from '../models/Notification';
 import { Types } from 'mongoose';
 
 const router = Router();
@@ -61,10 +62,21 @@ router.post('/messages/:userId', authenticateToken, async (req: Request, res: Re
       .populate('sender', 'name photos')
       .populate('receiver', 'name photos');
 
+    const notification = await Notification.create({
+      user: userId,
+      from: currentUserId,
+      type: 'message',
+      referenceId: message._id.toString()
+    });
+
+    const populatedNotification = await Notification.findById(notification._id)
+      .populate('from', 'name photos');
+
     const io = (req.app as any).get('io');
     if (io) {
       const roomId = [currentUserId.toString(), userId].sort().join('_');
       io.to(`chat_${roomId}`).emit('newMessage', populatedMessage);
+      io.to(`user_${userId}`).emit('newNotification', populatedNotification);
     }
 
     res.json(populatedMessage);

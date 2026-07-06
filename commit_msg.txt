@@ -1,0 +1,11 @@
+Full Firebase Auth with email verification enforcement
+
+- Switched from custom JWT to Firebase Auth
+- Firebase sends verification emails automatically
+- App blocks all routes until email is verified
+- Added VerifyEmail page with resend button + auto-redirect
+- Removed custom email service (Resend/SMTP), pending users, emailVerified field
+- Added Notification model + notification bell in NavBar (inbox for matches/messages)
+- Updated Profile page with image orientation handling (portrait/landscape)
+- Added comment modal on posts
+- Fixed NavBar with notification dropdown

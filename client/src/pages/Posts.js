@@ -26,8 +26,18 @@ const Posts = () => {
   const [commentText, setCommentText] = useState({});
   const [liking, setLiking] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
+  const [commentModal, setCommentModal] = useState(null);
+  const [imageOrientations, setImageOrientations] = useState({});
   const fileRef = useRef(null);
   const navigate = useNavigate();
+
+  const openCommentModal = (post) => {
+    setCommentModal(post);
+  };
+
+  const closeCommentModal = () => {
+    setCommentModal(null);
+  };
 
   const loadPosts = useCallback(async () => {
     try {
@@ -50,7 +60,7 @@ const Posts = () => {
       const formData = new FormData();
       formData.append('content', content);
       if (imageFile) formData.append('image', imageFile);
-      const res = await fetch('/api/posts', {
+      const res = await fetch('https://pwani-sparks.onrender.com/api/posts', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -110,9 +120,30 @@ const Posts = () => {
       body: JSON.stringify({ text })
     });
     if (res.ok) {
-      setPosts(prev => prev.map(p => p._id === postId ? { ...p, comments: [...(p.comments || []), { user: { name: user?.name, photos: user?.photos }, text, createdAt: new Date() }] } : p));
+      const comments = await res.json();
+      setPosts(prev => prev.map(p => p._id === postId ? { ...p, comments } : p));
       setCommentText(prev => ({ ...prev, [postId]: '' }));
     }
+  };
+
+  const addComment = async (postId, text) => {
+    if (!text?.trim()) return;
+    const res = await fetch(`/api/posts/comment/${postId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ text })
+    });
+    if (res.ok) {
+      const comments = await res.json();
+      setPosts(prev => prev.map(p => p._id === postId ? { ...p, comments } : p));
+      setCommentModal(prev => prev ? { ...prev, comments, newComment: '' } : null);
+    }
+  };
+
+  const handleImageLoad = (postId, e) => {
+    const img = e.target;
+    const isPortrait = img.naturalHeight > img.naturalWidth;
+    setImageOrientations(prev => ({ ...prev, [postId]: isPortrait ? 'portrait' : 'landscape' }));
   };
 
   const isLiked = (post) => post.liked || false;
@@ -178,8 +209,8 @@ const Posts = () => {
                   )}
                 </div>
                 {post.image && (
-                  <div className="ig-card-image" onDoubleClick={() => handleLike(post._id)}>
-                    <img src={post.image?.startsWith('http') ? post.image : ''} alt="" />
+                  <div className={`ig-card-image ${imageOrientations[post._id] || ''}`} onDoubleClick={() => handleLike(post._id)}>
+                    <img src={post.image?.startsWith('http') ? post.image : ''} alt="" onLoad={(e) => handleImageLoad(post._id, e)} />
                     {liked && <div className="ig-heart-anim">❤️</div>}
                   </div>
                 )}
@@ -191,34 +222,18 @@ const Posts = () => {
                       </svg>
                     </button>
                     <span className="ig-likes">{likeCount(post)} {likeCount(post) === 1 ? 'like' : 'likes'}</span>
+                    <button className="ig-action-btn" onClick={() => openCommentModal(post)}>
+                      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                      </svg>
+                    </button>
+                    <span className="ig-likes">{post.comments?.length || 0}</span>
                   </div>
                   {post.content && (
                     <div className="ig-card-caption">
                       <strong>{post.user?.name}</strong> {post.content}
                     </div>
                   )}
-                  {post.comments?.length > 0 && (
-                    <div className="ig-comments">
-                      {post.comments.map((c, i) => (
-                        <div key={i} className="ig-comment">
-                          <strong>{c.user?.name || 'User'}</strong> {c.text}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="ig-comment-form">
-                    <input
-                      value={commentText[post._id] || ''}
-                      onChange={(e) => setCommentText(prev => ({ ...prev, [post._id]: e.target.value }))}
-                      placeholder="Add a comment..."
-                      onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleComment(post._id); } }}
-                    />
-                    <button
-                      onClick={() => handleComment(post._id)}
-                      disabled={!commentText[post._id]?.trim()}
-                      className="ig-comment-btn"
-                    >Post</button>
-                  </div>
                 </div>
               </div>
             );
@@ -226,6 +241,40 @@ const Posts = () => {
         </div>
       </div>
       <NavBar />
+      {commentModal && (
+        <div className="modal-overlay" onClick={closeCommentModal}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Comments</h3>
+              <button className="modal-close" onClick={closeCommentModal}>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div className="modal-comments">
+              {commentModal.comments.map((c, i) => (
+                <div key={i} className="ig-comment">
+                  <strong>{c.user?.name || 'User'}</strong> {c.text}
+                </div>
+              ))}
+            </div>
+            <div className="ig-comment-form">
+              <input
+                value={commentModal.newComment || ''}
+                onChange={(e) => setCommentModal(prev => prev ? { ...prev, newComment: e.target.value } : null)}
+                placeholder="Add a comment..."
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addComment(commentModal.post._id, e.target.value); } }}
+              />
+              <button
+                onClick={() => addComment(commentModal.post._id, commentModal.newComment)}
+                disabled={!commentModal.newComment?.trim()}
+                className="ig-comment-btn"
+              >Post</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

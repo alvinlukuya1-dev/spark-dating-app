@@ -7,7 +7,7 @@ const MessageBubble = ({ message, isOwnMessage }) => {
     <div className={`message-bubble ${isOwnMessage ? 'own' : 'other'}`}>
       <div className="message-content">
         {message.mediaUrl && message.type === 'image' ? (
-          <img src={message.mediaUrl} alt="Sent image" className="message-image" />
+          <img src={message.mediaUrl} alt="" className="message-image" />
         ) : (
           <p>{message.content}</p>
         )}

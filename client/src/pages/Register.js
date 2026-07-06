@@ -9,33 +9,41 @@ const Register = () => {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { register } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, username, name })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        // Auto-login after registration
-        login(data.token);
-        navigate('/posts', { replace: true });
-      } else {
-        setError(data.msg || 'Registration failed');
-      }
+      await register(email, password, username, name);
+      setDone(true);
     } catch (err) {
-      setError('Network error');
+      setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
+
+  if (done) {
+    return (
+      <div className="auth-page">
+        <div className="auth-box">
+          <h2>Verify Your Email</h2>
+          <div className="verify-sent">
+            <span className="verify-icon">📧</span>
+            <p>We sent a verification link to <strong>{email}</strong></p>
+            <p className="text-muted">Check your inbox and click the link to verify your account.</p>
+          </div>
+          <button onClick={() => navigate('/login')} className="btn btn-primary">
+            Go to Login
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="auth-page">

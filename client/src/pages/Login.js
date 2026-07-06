@@ -12,26 +12,21 @@ const Login = () => {
   const { login } = useAuth();
 
   const from = location.state?.from?.pathname || '/posts';
+  const params = new URLSearchParams(location.search);
+
+  React.useEffect(() => {
+    if (params.get('verification') === 'success') setError('');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        login(data.token);
-        navigate(from, { replace: true });
-      } else {
-        setError(data.msg || 'Login failed');
-      }
+      await login(email, password);
+      navigate(from, { replace: true });
     } catch (err) {
-      setError('Network error');
+      setError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }

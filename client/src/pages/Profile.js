@@ -74,7 +74,7 @@ const Profile = () => {
     try {
       const formData = new FormData();
       formData.append('photo', file);
-      const res = await fetch('/api/profile/photo', {
+      const res = await fetch('https://pwani-sparks.onrender.com/api/profile/photo', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData
@@ -109,7 +109,7 @@ const Profile = () => {
       const formData = new FormData();
       formData.append('content', newContent);
       if (newImage) formData.append('image', newImage);
-      const res = await fetch('/api/posts', {
+      const res = await fetch('https://pwani-sparks.onrender.com/api/posts', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
         body: formData

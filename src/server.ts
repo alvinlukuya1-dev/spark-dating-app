@@ -10,6 +10,7 @@ import swipeRoutes from './routes/swipe';
 import chatRoutes from './routes/chat';
 import postRoutes from './routes/posts';
 import searchRoutes from './routes/search';
+import notificationRoutes from './routes/notifications';
 import { Post } from './models/Post';
 import { setupSocket, notifyNewMatch } from './socket';
 
@@ -41,6 +42,7 @@ app.use('/api/swipe', swipeRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/users', searchRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });
