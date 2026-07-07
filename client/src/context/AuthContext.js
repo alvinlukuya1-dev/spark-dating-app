@@ -30,7 +30,8 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${idToken}`
-        }
+        },
+        body: JSON.stringify({ idToken })
       });
       if (res.ok) {
         const data = await res.json();
@@ -76,7 +77,8 @@ export const AuthProvider = ({ children }) => {
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${idToken}`
-      }
+      },
+      body: JSON.stringify({ idToken })
     });
     if (!res.ok) {
       const data = await res.json();
@@ -99,7 +101,7 @@ export const AuthProvider = ({ children }) => {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${idToken}`
       },
-      body: JSON.stringify({ username, name })
+      body: JSON.stringify({ username, name, idToken })
     });
     if (!res.ok) {
       const data = await res.json();

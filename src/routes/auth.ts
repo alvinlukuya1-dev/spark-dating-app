@@ -5,10 +5,17 @@ import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
+const getToken = (req: any) => {
+  const fromHeader = req.headers['authorization']?.split(' ')[1];
+  if (fromHeader) return fromHeader;
+  const fromBody = req.headers['x-auth-token'] || req.body?.idToken;
+  if (fromBody) return fromBody;
+  return null;
+};
+
 router.post('/register', async (req: any, res: any) => {
   try {
-    const authHeader = req.headers['authorization'];
-    const idToken = authHeader && authHeader.split(' ')[1];
+    const idToken = getToken(req);
     if (!idToken) return res.status(401).json({ msg: 'No token provided' });
     if (!firebaseAuth) return res.status(500).json({ msg: 'Firebase not configured' });
 
@@ -45,8 +52,7 @@ router.post('/register', async (req: any, res: any) => {
 
 router.post('/login', async (req: any, res: any) => {
   try {
-    const authHeader = req.headers['authorization'];
-    const idToken = authHeader && authHeader.split(' ')[1];
+    const idToken = getToken(req);
     if (!idToken) return res.status(401).json({ msg: 'No token provided' });
     if (!firebaseAuth) return res.status(500).json({ msg: 'Firebase not configured' });
 

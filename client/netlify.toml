@@ -7,7 +7,6 @@
   to = "https://pwani-sparks.onrender.com/api/:splat"
   status = 200
   force = true
-  headers = { X-Forwarded-For = ":splat" }
 
 [[redirects]]
   from = "/api/"
