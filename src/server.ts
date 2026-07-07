@@ -65,6 +65,14 @@ app.get('/api/debug-env', (_req, res) => {
   });
 });
 
+app.all('/api/debug-headers', (req, res) => {
+  res.json({
+    method: req.method,
+    headers: req.headers,
+    body: req.body
+  });
+});
+
 setupSocket(io);
 
 const PORT = 4000;
